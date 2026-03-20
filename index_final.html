@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>授業いろいろ AI アプリ&プリント</title>
+<style>
+:root {
+  --bg: #f7f5f0; --card: #fff; --accent: #2d6a4f;
+  --text: #1a1a1a; --muted: #666; --border: #e0dcd4;
+  --star-color: #e8a020; --hebi-color: #27ae60;
+  --tag-bg: #e8f4ee; --tag-text: #2d6a4f;
+  --tool-bg: #fff3e0; --tool-text: #b45309;
+  --radius: 10px; --shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+header { background: var(--accent); color: #fff; padding: 14px 20px 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
+header h1 { font-size: 1rem; font-weight: 700; }
+header p  { font-size: .73rem; opacity: .82; margin-top: 1px; }
+
+.controls { background: #fff; border-bottom: 1px solid var(--border); padding: 10px 16px; position: sticky; top: 56px; z-index: 99; display: flex; flex-direction: column; gap: 8px; }
+.search-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.search-box { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 6px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 12px; }
+.search-box input { border: none; background: transparent; outline: none; font-size: .88rem; width: 100%; font-family: inherit; }
+.result-count { font-size: .75rem; color: var(--muted); white-space: nowrap; }
+
+.toggle-btn { display: flex; align-items: center; gap: 5px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; font-family: inherit; font-size: .82rem; color: var(--muted); transition: all .15s; white-space: nowrap; user-select: none; }
+.toggle-btn.on-star { background: #fff8e1; border-color: var(--star-color); color: var(--star-color); font-weight: 700; }
+.toggle-btn.on-hebi { background: #e8f8ee; border-color: var(--hebi-color); color: var(--hebi-color); font-weight: 700; }
+
+.cat-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.cat-btn { padding: 4px 11px; border-radius: 16px; border: 1.5px solid var(--border); background: #fff; font-size: .75rem; cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap; color: var(--text); }
+.cat-btn:hover { border-color: var(--accent); color: var(--accent); }
+.cat-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+main { max-width: 1060px; margin: 0 auto; padding: 18px 14px 60px; }
+
+.loading { text-align: center; padding: 60px 20px; color: var(--muted); font-size: .9rem; }
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin-left: 8px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.cat-section { margin-bottom: 30px; }
+.cat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 7px; border-bottom: 2px solid var(--accent); }
+.cat-title { font-size: .98rem; font-weight: 700; color: var(--accent); }
+.cat-count { margin-left: auto; font-size: .7rem; background: var(--tag-bg); color: var(--tag-text); padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow); text-decoration: none; color: inherit; transition: box-shadow .15s, transform .15s, border-color .15s; }
+.card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.11); transform: translateY(-1px); border-color: var(--accent); }
+.card.is-hebi { border-left: 3px solid var(--hebi-color); }
+.card-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; background: var(--bg); }
+.card-top { display: flex; align-items: flex-start; gap: 5px; }
+.mark { font-size: .9rem; flex-shrink: 0; margin-top: 1px; line-height: 1; }
+.card-title { font-size: .87rem; font-weight: 600; line-height: 1.4; }
+.card-desc  { font-size: .75rem; color: var(--muted); line-height: 1.5; }
+.card-tags  { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.tag        { font-size: .67rem; padding: 2px 6px; border-radius: 4px; }
+.tag.form   { background: var(--tag-bg); color: var(--tag-text); }
+.tag.tool   { background: var(--tool-bg); color: var(--tool-text); }
+
+.no-results { text-align: center; padding: 50px 20px; color: var(--muted); font-size: .9rem; display: none; }
+.error-msg  { text-align: center; padding: 30px; color: #c0392b; background: #fdf0f0; border-radius: 8px; margin: 20px 0; font-size: .85rem; }
+
+footer { text-align: center; padding: 16px; font-size: .73rem; color: var(--muted); border-top: 1px solid var(--border); }
+footer a { color: var(--accent); }
+
+@media(max-width:560px){ header { padding: 10px 14px; } .controls { top: 50px; } .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 授業いろいろ AI アプリ&プリント</h1>
+  <p>特別支援教育・授業で使えるWEBアプリ・プリント・AI活用まとめ</p>
+</header>
+
+<div class="controls">
+  <div class="search-row">
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="キーワードで検索…" oninput="render()">
+    </div>
+    <button class="toggle-btn on-star" id="starToggle" onclick="toggleStar()">⭐ オススメのみ</button>
+    <button class="toggle-btn" id="hebiToggle" onclick="toggleHebi()">🌻 ヘビロテ</button>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+  <div class="cat-row" id="catRow"></div>
+</div>
+
+<main id="main"><div class="loading">データを読み込み中<span class="spinner"></span></div></main>
+<div class="no-results" id="noResults">一致するアプリが見つかりませんでした。</div>
+
+<footer>
+  <a href="https://sites.google.com/view/iroiroai" target="_blank">Google Sites（詳細・2025年版）</a>
+  ／ <a href="https://sites.google.com/view/iroiroai/2026" target="_blank">2026年版</a>
+</footer>
+
+<script>
+// ============================================================
+//  設定
+// ============================================================
+const WORKER_URL = 'https://sparkling-water-9d71.tofya17.workers.dev';
+
+const CATEGORIES = [
+  "時計・時間","計算","国語・読解","ビジョン",
+  "ゲーム","グラフ・図形","社会・生活","制作ツール","AI活用メモ"
+];
+
+// ── 状態 ──
+let starOnly  = true;
+let hebiOnly  = false;
+let activeCat = 'all';
+let allApps   = [];
+
+// ── カテゴリボタン生成 ──
+function buildCatButtons() {
+  const row = document.getElementById('catRow');
+  row.innerHTML = '<button class="cat-btn active" onclick="setCat(\'all\',this)">すべて</button>';
+  CATEGORIES.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn';
+    btn.textContent = c;
+    btn.onclick = function(){ setCat(c, this); };
+    row.appendChild(btn);
+  });
+}
+
+function setCat(cat, btn) {
+  activeCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function toggleStar() {
+  starOnly = !starOnly;
+  if (starOnly) hebiOnly = false;
+  document.getElementById('starToggle').classList.toggle('on-star', starOnly);
+  document.getElementById('hebiToggle').classList.toggle('on-hebi', hebiOnly);
+  render();
+}
+
+function toggleHebi() {
+  hebiOnly = !hebiOnly;
+  if (hebiOnly) starOnly = false;
+  document.getElementById('hebiToggle').classList.toggle('on-hebi', hebiOnly);
+  document.getElementById('starToggle').classList.toggle('on-star', starOnly);
+  render();
+}
+
+// ── データ取得 ──
+async function loadData() {
+  try {
+    const res = await fetch(WORKER_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    allApps = await res.json();
+    buildCatButtons();
+    render();
+  } catch(e) {
+    document.getElementById('main').innerHTML =
+      `<div class="error-msg">⚠️ データの取得に失敗しました。<br><small>${e.message}</small></div>`;
+  }
+}
+
+// ── レンダリング ──
+function render() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  let total = 0;
+
+  // カテゴリ別に表示
+  const cats = activeCat === 'all' ? CATEGORIES : [activeCat];
+
+  cats.forEach(cat => {
+    const apps = allApps.filter(a => {
+      if (a.cat !== cat) return false;
+      if (starOnly && !a.star) return false;
+      if (hebiOnly && !a.hebi) return false;
+      if (q) {
+        const hay = [a.title, a.desc, a.tags, a.tool, a.form].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    if (!apps.length) return;
+    total += apps.length;
+
+    const sec = document.createElement('section');
+    sec.className = 'cat-section';
+    sec.innerHTML = `<div class="cat-header"><span class="cat-title">${cat}</span><span class="cat-count">${apps.length}件</span></div><div class="cards"></div>`;
+    main.appendChild(sec);
+
+    const grid = sec.querySelector('.cards');
+    apps.forEach(a => {
+      const el = document.createElement('a');
+      el.className = 'card' + (a.hebi ? ' is-hebi' : '');
+      el.href = a.url || '#';
+      if (a.url) { el.target = '_blank'; el.rel = 'noopener'; }
+
+      const marks = (a.hebi ? '🌻' : '') + (a.star ? '⭐' : '');
+      const tags = [];
+      if (a.tool) tags.push(`<span class="tag tool">${a.tool}</span>`);
+      if (a.form) tags.push(`<span class="tag form">${a.form}</span>`);
+
+      el.innerHTML = `
+        ${a.img ? `<img class="card-img" src="${a.img}" alt="${a.title}" loading="lazy" onerror="this.style.display='none'">` : ''}
+        <div class="card-top">
+          ${marks ? `<span class="mark">${marks}</span>` : '<span style="width:.5rem;flex-shrink:0"></span>'}
+          <span class="card-title">${a.title}</span>
+        </div>
+        <div class="card-desc">${a.desc}</div>
+        ${tags.length ? `<div class="card-tags">${tags.join('')}</div>` : ''}
+      `;
+      grid.appendChild(el);
+    });
+  });
+
+  document.getElementById('resultCount').textContent = total > 0 ? `${total}件` : '';
+  document.getElementById('noResults').style.display = total === 0 && allApps.length > 0 ? 'block' : 'none';
+}
+
+loadData();
+</script>
+</body>
+</html>
