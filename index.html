@@ -73,7 +73,7 @@ footer a { color: var(--accent); }
 
 <header>
   <h1>📚 授業いろいろ AI アプリ&プリント</h1>
-  <p>特別支援教育・授業で使えるWEBアプリ・プリント・AI活用まとめ</p>
+  <p>授業で使えるWEBアプリ・プリント・AI活用まとめ</p>
 </header>
 
 <div class="controls">
@@ -136,17 +136,13 @@ function setCat(cat, btn) {
 
 function toggleStar() {
   starOnly = !starOnly;
-  if (starOnly) hebiOnly = false;
   document.getElementById('starToggle').classList.toggle('on-star', starOnly);
-  document.getElementById('hebiToggle').classList.toggle('on-hebi', hebiOnly);
   render();
 }
 
 function toggleHebi() {
   hebiOnly = !hebiOnly;
-  if (hebiOnly) starOnly = false;
   document.getElementById('hebiToggle').classList.toggle('on-hebi', hebiOnly);
-  document.getElementById('starToggle').classList.toggle('on-star', starOnly);
   render();
 }
 
@@ -177,8 +173,9 @@ function render() {
   cats.forEach(cat => {
     const apps = allApps.filter(a => {
       if (a.cat !== cat) return false;
-      if (starOnly && !a.star) return false;
-      if (hebiOnly && !a.hebi) return false;
+      if (starOnly && hebiOnly && !(a.star && a.hebi)) return false;
+      if (starOnly && !hebiOnly && !a.star) return false;
+      if (hebiOnly && !starOnly && !a.hebi) return false;
       if (q) {
         const hay = [a.title, a.desc, a.tags, a.tool, a.form].join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
