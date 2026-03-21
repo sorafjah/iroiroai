@@ -242,11 +242,10 @@ function buildCatButtons() {
   row.appendChild(allBtn);
 
   // 「NEW」ボタン（すべて と 時計・時間 の間）
-  const newCount = allApps.filter(a => isNew(a.date)).length;
   const newBtn = document.createElement('button');
   newBtn.className = 'cat-btn';
   newBtn.id = 'newCatBtn';
-  newBtn.textContent = 'NEW' + (newCount > 0 ? ' ' + newCount : '');
+  newBtn.textContent = 'NEW';
   newBtn.onclick = function(){ toggleNewCat(this); };
   row.appendChild(newBtn);
 
