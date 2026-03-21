@@ -232,7 +232,25 @@ let allApps   = [];
 
 function buildCatButtons() {
   const row = document.getElementById('catRow');
-  row.innerHTML = '<button class="cat-btn active" onclick="setCat(\'all\',this)">すべて</button>';
+  row.innerHTML = '';
+
+  // 「すべて」ボタン
+  const allBtn = document.createElement('button');
+  allBtn.className = 'cat-btn active';
+  allBtn.textContent = 'すべて';
+  allBtn.onclick = function(){ setCat('all', this); };
+  row.appendChild(allBtn);
+
+  // 「NEW」ボタン（すべて と 時計・時間 の間）
+  const newCount = allApps.filter(a => isNew(a.date)).length;
+  const newBtn = document.createElement('button');
+  newBtn.className = 'cat-btn';
+  newBtn.id = 'newCatBtn';
+  newBtn.textContent = 'NEW' + (newCount > 0 ? ' ' + newCount : '');
+  newBtn.onclick = function(){ toggleNewCat(this); };
+  row.appendChild(newBtn);
+
+  // 各カテゴリボタン
   CATEGORIES.forEach(c => {
     const btn = document.createElement('button');
     btn.className = 'cat-btn';
@@ -252,11 +270,14 @@ function setCat(cat, btn) {
 
 function toggleNewCat(btn) {
   newOnly = !newOnly;
-  // 他のカテゴリボタンのactiveを外す
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   if (newOnly) {
     btn.classList.add('active');
     activeCat = 'all';
+  } else {
+    // NEWを解除したら「すべて」をアクティブに戻す
+    const allBtn = document.querySelector('.cat-row .cat-btn');
+    if (allBtn) allBtn.classList.add('active');
   }
   render();
 }
