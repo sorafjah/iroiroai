@@ -146,7 +146,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 18px 14px 60px; }
 .card-desc  { font-size: .76rem; color: var(--muted); line-height: 1.55; flex: 1; }
 .card-footer { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
 .tag { font-size: .67rem; padding: 2px 7px; border-radius: 4px; }
-.tag.form { background: var(--tag-bg); color: var(--tag-text); }
 .tag.tool { background: var(--tool-bg); color: var(--tool-text); }
 
 /* 新着バッジ（タグの横にインライン表示） */
@@ -340,7 +339,7 @@ function render() {
       if (hebiOnly && !a.hebi) return false;
       if (newOnly && !isNew(a.date)) return false;
       if (q) {
-        const hay = [a.title, a.desc, a.tags, a.tool, a.form].join(' ').toLowerCase();
+        const hay = [a.title, a.desc, a.tags, a.tool].join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -366,8 +365,6 @@ function render() {
 
       const tags = [];
       if (a.tool) tags.push(`<span class="tag tool">${a.tool}</span>`);
-      if (a.form) tags.push(`<span class="tag form">${a.form}</span>`);
-
       if (isNew(a.date)) tags.push('<span class="tag new">NEW</span>');
 
       el.innerHTML = `
