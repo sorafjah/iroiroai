@@ -180,7 +180,7 @@ footer a { color: var(--accent); }
 <header>
   <div class="header-text">
     <h1>📚 授業いろいろ AI アプリ&プリント</h1>
-    <p>授業で使えるWEBアプリ・プリント・AI活用まとめ</p>
+    <p>授業で使えるWEBアプリ（AIに作ってもらった）</p>
   </div>
   <div class="qr-wrap" onclick="this.classList.toggle('open')">
     <img src="iroiroai540.png" alt="QRコード">
@@ -220,7 +220,7 @@ const NEW_DAYS = 7; // 何日以内を新着とするか
 
 const CATEGORIES = [
   "時計・時間","計算","グラフ・図形","国語・読解",
-  "社会・生活","みる・まねる","ゲーム","制作ツール","コツ・リンク"
+  "社会・生活","みる・まねる","ゲーム","制作ツール","リンク"
 ];
 
 let starOnly  = false;
@@ -326,7 +326,7 @@ function render() {
   let total = 0;
 
   // カテゴリ名マッピング（Notion側の旧名→新名）
-  const CAT_MAP = { 'ビジョン': 'みる・まねる', 'AI活用メモ': 'コツ・リンク' };
+  const CAT_MAP = { 'ビジョン': 'みる・まねる', 'AI活用メモ': 'リンク', 'コツ・リンク': 'リンク' };
   // allAppsのcatを変換
   allApps.forEach(a => { if (CAT_MAP[a.cat]) a.cat = CAT_MAP[a.cat]; });
 
