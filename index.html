@@ -228,6 +228,15 @@ let hebiOnly  = false;
 let activeCat = 'all';
 let allApps   = [];
 
+// GitHub raw配信をjsDelivr CDN経由に変換（配信高速化・キャッシュ効果）
+function toCdnUrl(url) {
+  if (!url) return url;
+  const m = url.match(/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/);
+  if (!m) return url; // 想定外の形式はそのまま
+  const [, user, repo, branch, path] = m;
+  return `https://cdn.jsdelivr.net/gh/${user}/${repo}@${branch}/${path}`;
+}
+
 function buildCatButtons() {
   const row = document.getElementById('catRow');
   row.innerHTML = '';
@@ -375,7 +384,7 @@ function render() {
           <div class="card-desc">${a.desc}</div>
           ${tags.length ? `<div class="card-footer">${tags.join('')}</div>` : ''}
         </div>
-        ${a.img ? `<div class="card-img-wrap"><img src="${a.img}" alt="${a.title}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        ${a.img ? `<div class="card-img-wrap"><img src="${toCdnUrl(a.img)}" alt="${a.title}" width="400" height="225" loading="lazy" decoding="async" onerror="this.parentElement.style.display='none'"></div>` : ''}
       `;
       grid.appendChild(el);
     });
