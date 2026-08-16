@@ -219,7 +219,7 @@ const NEW_DAYS = 7; // 何日以内を新着とするか
 
 const CATEGORIES = [
   "時計・時間","計算","グラフ・図形","理科","国語・読解",
-  "社会・生活","みる・まねる","ゲーム","制作ツール","そのた・素材","リンク"
+  "社会・自活","みる・まねる","ゲーム","制作ツール","そのた・素材","リンク"
 ];
 
 let starOnly  = false;
@@ -327,6 +327,35 @@ async function loadData() {
   }
 }
 
+// カード1件分のDOM要素を作る（カテゴリ別表示・NEW表示 共通で使う）
+function buildCard(a) {
+  const el = document.createElement('a');
+  el.className = 'card' + (a.hebi ? ' is-hebi' : '');
+  el.href = a.url || '#';
+  if (a.url) { el.target = '_blank'; el.rel = 'noopener'; }
+
+  const marks = [];
+  if (a.hebi) marks.push('🌻');
+  if (a.star) marks.push('⭐');
+
+  const tags = [];
+  if (a.tool) tags.push(`<span class="tag tool">${a.tool}</span>`);
+  if (isNew(a.date)) tags.push('<span class="tag new">NEW</span>');
+
+  el.innerHTML = `
+    <div class="card-body">
+      <div class="card-top">
+        ${marks.length ? `<span class="marks">${marks.join('')}</span>` : ''}
+        <span class="card-title">${a.title}</span>
+      </div>
+      <div class="card-desc">${a.desc}</div>
+      ${tags.length ? `<div class="card-footer">${tags.join('')}</div>` : ''}
+    </div>
+    ${a.img ? `<div class="card-img-wrap"><img src="${toCdnUrl(a.img)}" alt="${a.title}" width="400" height="225" loading="lazy" decoding="async" onerror="this.parentElement.style.display='none'"></div>` : ''}
+  `;
+  return el;
+}
+
 function render() {
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   const main = document.getElementById('main');
@@ -334,61 +363,54 @@ function render() {
   let total = 0;
 
   // カテゴリ名マッピング（Notion側の旧名→新名）
-  const CAT_MAP = { 'ビジョン': 'みる・まねる', 'AI活用メモ': 'リンク', 'コツ・リンク': 'リンク' };
+  const CAT_MAP = { 'ビジョン': 'みる・まねる', 'AI活用メモ': 'リンク', 'コツ・リンク': 'リンク', '社会・生活': '社会・自活' };
   // allAppsのcatを変換
   allApps.forEach(a => { if (CAT_MAP[a.cat]) a.cat = CAT_MAP[a.cat]; });
 
-  const cats = activeCat === 'all' ? CATEGORIES : [activeCat];
+  // 共通の絞り込み条件（星・まずみて・検索語）
+  function matchesFilters(a) {
+    if (starOnly && !a.star) return false;
+    if (hebiOnly && !a.hebi) return false;
+    if (q) {
+      const hay = [a.title, a.desc, a.tags, a.tool].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }
 
-  cats.forEach(cat => {
-    const apps = allApps.filter(a => {
-      if (a.cat !== cat) return false;
-      if (starOnly && !a.star) return false;
-      if (hebiOnly && !a.hebi) return false;
-      if (newOnly && !isNew(a.date)) return false;
-      if (q) {
-        const hay = [a.title, a.desc, a.tags, a.tool].join(' ').toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
+  if (newOnly) {
+    // NEWタブ：ジャンル分けせず、新しい順1本のグリッドで表示
+    const apps = allApps.filter(a => isNew(a.date) && matchesFilters(a));
+    total = apps.length;
+
+    if (apps.length) {
+      const sec = document.createElement('section');
+      sec.className = 'cat-section';
+      sec.innerHTML = `<div class="cat-header"><span class="cat-title">新しいアプリ</span><span class="cat-count">${apps.length}件</span></div><div class="cards"></div>`;
+      main.appendChild(sec);
+
+      const grid = sec.querySelector('.cards');
+      // allAppsは既に新しい順にソート済みなので、そのままの並びでOK
+      apps.forEach(a => grid.appendChild(buildCard(a)));
+    }
+  } else {
+    // 通常表示：カテゴリごとにセクション分け
+    const cats = activeCat === 'all' ? CATEGORIES : [activeCat];
+
+    cats.forEach(cat => {
+      const apps = allApps.filter(a => a.cat === cat && matchesFilters(a));
+      if (!apps.length) return;
+      total += apps.length;
+
+      const sec = document.createElement('section');
+      sec.className = 'cat-section';
+      sec.innerHTML = `<div class="cat-header"><span class="cat-title">${cat}</span><span class="cat-count">${apps.length}件</span></div><div class="cards"></div>`;
+      main.appendChild(sec);
+
+      const grid = sec.querySelector('.cards');
+      apps.forEach(a => grid.appendChild(buildCard(a)));
     });
-    if (!apps.length) return;
-    total += apps.length;
-
-    const sec = document.createElement('section');
-    sec.className = 'cat-section';
-    sec.innerHTML = `<div class="cat-header"><span class="cat-title">${cat}</span><span class="cat-count">${apps.length}件</span></div><div class="cards"></div>`;
-    main.appendChild(sec);
-
-    const grid = sec.querySelector('.cards');
-    apps.forEach(a => {
-      const el = document.createElement('a');
-      el.className = 'card' + (a.hebi ? ' is-hebi' : '');
-      el.href = a.url || '#';
-      if (a.url) { el.target = '_blank'; el.rel = 'noopener'; }
-
-      const marks = [];
-      if (a.hebi) marks.push('🌻');
-      if (a.star) marks.push('⭐');
-
-      const tags = [];
-      if (a.tool) tags.push(`<span class="tag tool">${a.tool}</span>`);
-      if (isNew(a.date)) tags.push('<span class="tag new">NEW</span>');
-
-      el.innerHTML = `
-        <div class="card-body">
-          <div class="card-top">
-            ${marks.length ? `<span class="marks">${marks.join('')}</span>` : ''}
-            <span class="card-title">${a.title}</span>
-          </div>
-          <div class="card-desc">${a.desc}</div>
-          ${tags.length ? `<div class="card-footer">${tags.join('')}</div>` : ''}
-        </div>
-        ${a.img ? `<div class="card-img-wrap"><img src="${toCdnUrl(a.img)}" alt="${a.title}" width="400" height="225" loading="lazy" decoding="async" onerror="this.parentElement.style.display='none'"></div>` : ''}
-      `;
-      grid.appendChild(el);
-    });
-  });
+  }
 
   document.getElementById('resultCount').textContent = total > 0 ? `${total}件` : '';
   document.getElementById('noResults').style.display = total === 0 && allApps.length > 0 ? 'block' : 'none';
