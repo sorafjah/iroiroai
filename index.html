@@ -85,6 +85,8 @@ header p  { font-size: .73rem; opacity: .82; margin-top: 1px; }
 }
 .cat-btn:hover { border-color: var(--accent); color: var(--accent); }
 .cat-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cat-btn:disabled { opacity: .45; cursor: not-allowed; }
+.cat-btn:disabled:hover { border-color: var(--border); color: var(--text); }
 
 /* ── メイン ── */
 main { max-width: 1200px; margin: 0 auto; padding: 18px 14px 60px; }
@@ -266,7 +268,13 @@ function buildCatButtons() {
   });
 }
 
+// まずみてONのときはジャンル選択に意味がないため、見た目を「すべて」に戻して押せなくする
+function updateCatRowDisabled() {
+  document.querySelectorAll('.cat-btn').forEach(b => { b.disabled = hebiOnly; });
+}
+
 function setCat(cat, btn) {
+  if (hebiOnly) return; // まずみて中はジャンル切り替え不可
   activeCat = cat;
   newOnly = false;
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -275,6 +283,7 @@ function setCat(cat, btn) {
 }
 
 function toggleNewCat(btn) {
+  if (hebiOnly) return; // まずみて中はNEWタブも切り替え不可
   newOnly = !newOnly;
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   if (newOnly) {
@@ -297,6 +306,16 @@ function toggleStar() {
 function toggleHebi() {
   hebiOnly = !hebiOnly;
   document.getElementById('hebiToggle').classList.toggle('on-hebi', hebiOnly);
+
+  // まずみてONにしたら、ジャンル・NEWの選択表示を「すべて」に戻す（実際の絞り込みは無視されるため）
+  if (hebiOnly) {
+    newOnly = false;
+    activeCat = 'all';
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    const allBtn = document.querySelector('.cat-row .cat-btn');
+    if (allBtn) allBtn.classList.add('active');
+  }
+  updateCatRowDisabled();
   render();
 }
 
@@ -327,7 +346,7 @@ async function loadData() {
   }
 }
 
-// カード1件分のDOM要素を作る（カテゴリ別表示・NEW表示 共通で使う）
+// カード1件分のDOM要素を作る（カテゴリ別表示・NEW表示・まずみて表示 共通で使う）
 function buildCard(a) {
   const el = document.createElement('a');
   el.className = 'card' + (a.hebi ? ' is-hebi' : '');
@@ -378,7 +397,21 @@ function render() {
     return true;
   }
 
-  if (newOnly) {
+  if (hebiOnly) {
+    // まずみてタブ：ジャンル・NEW選択を無視して、🌻のアプリを新しい順1本のグリッドで表示
+    const apps = allApps.filter(a => matchesFilters(a));
+    total = apps.length;
+
+    if (apps.length) {
+      const sec = document.createElement('section');
+      sec.className = 'cat-section';
+      sec.innerHTML = `<div class="cat-header"><span class="cat-title">まずみて</span><span class="cat-count">${apps.length}件</span></div><div class="cards"></div>`;
+      main.appendChild(sec);
+
+      const grid = sec.querySelector('.cards');
+      apps.forEach(a => grid.appendChild(buildCard(a)));
+    }
+  } else if (newOnly) {
     // NEWタブ：ジャンル分けせず、新しい順1本のグリッドで表示
     const apps = allApps.filter(a => isNew(a.date) && matchesFilters(a));
     total = apps.length;
